@@ -1,37 +1,16 @@
-pipeline {
-  agent any
-  stages {
+node {
+    def app
     stage('Clone repository') {
-      steps {
         checkout scm
-      }
     }
-
     stage('Build image') {
-      steps {
-        script {
-          app = docker.build(DOCKER_IMAGE)
-        }
-
-      }
+       app = docker.build("mcvetanoska5/kiii")
     }
-
-    stage('Push image') {
-      steps {
-        script {
-          docker.withRegistry(REGISTRY, DOCKER_CREDENTIALS) {
+    stage('Push image') {   
+        docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
             app.push("${env.BRANCH_NAME}-${env.BUILD_NUMBER}")
             app.push("${env.BRANCH_NAME}-latest")
-          }
+            // signal the orchestrator that there is a new version
         }
-
-      }
     }
-
-  }
-  environment {
-    DOCKER_IMAGE = 'mcvetanoska5/kiii'
-    REGISTRY = 'https://registry.hub.docker.com'
-    DOCKER_CREDENTIALS = 'dockerhub'
-  }
 }
